@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # Günlük bülten: feed'lerdeki yeni yazıları snappdf ile PDF'e çevirir.
 #   mod=native → orijinal URL'den doğrudan
 #   mod=cevir  → cevir.py ile Türkçeye çevrilir, yerelden sunulup çevrilir
@@ -9,7 +9,7 @@
 #   SNAPPDF, FEEDS, STATE, OUTBASE, PORT
 
 set -u
-setopt NULL_GLOB
+shopt -s nullglob
 cd "$(dirname "$0")"
 
 SNAPPDF="${SNAPPDF:-$HOME/.cargo/bin/snappdf}"
@@ -30,7 +30,8 @@ trap "kill $SERVER_PID 2>/dev/null; rm -rf $SERVE" EXIT
 sleep 1
 
 slugla() {
-  local s="${1:l}"
+  local s
+  s=$(echo "$1" | tr '[:upper:]' '[:lower:]')
   s=${s//ğ/g}; s=${s//ü/u}; s=${s//ş/s}; s=${s//ı/i}; s=${s//ö/o}; s=${s//ç/c}
   echo "$s" | tr -cs 'a-z0-9' '-' | cut -c1-50 | sed 's/-$//'
 }
@@ -74,7 +75,11 @@ while IFS=$'\t' read -r konu mod host url baslik; do
   if "$SNAPPDF" "$kaynak" -o "$hedef" --page-size a5 --theme sepia \
       --lang tr --author "$yazar" >> "$LOG" 2>&1; then
     for p in "$hedef"/*.pdf; do
-      [[ " ${onceki[*]} " == *" $p "* ]] || mv "$p" "$hedef/${sira}. $(slugla "$baslik").pdf"
+      eski=0
+      for o in ${onceki[@]+"${onceki[@]}"}; do
+        [ "$p" = "$o" ] && eski=1 && break
+      done
+      [ "$eski" = "0" ] && mv "$p" "$hedef/${sira}. $(slugla "$baslik").pdf"
     done
     echo "$url" >> "$STATE"
     BASARILI=$((BASARILI + 1))
