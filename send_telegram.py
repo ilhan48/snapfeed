@@ -60,9 +60,25 @@ def main():
     gun = os.path.basename(os.path.normpath(args.dir))
     konular = sorted(d for d in os.listdir(args.dir)
                      if os.path.isdir(os.path.join(args.dir, d)))
+    kok = sorted(f for f in os.listdir(args.dir) if f.endswith(".pdf"))
     toplam = 0
-    post("sendMessage", {"chat_id": chat,
-         "text": f"📰 Günlük bülten — {gun}\nKonular: {', '.join(konular)}"})
+    if kok:  # gün indeksi önce gelir
+        medya, dosyalar = [], []
+        for i, pdf in enumerate(kok[:10]):
+            with open(os.path.join(args.dir, pdf), "rb") as f:
+                icerik = f.read()
+            alan = f"indeks{i}"
+            dosyalar.append((alan, pdf, icerik))
+            oge = {"type": "document", "media": f"attach://{alan}"}
+            if i == 0:
+                oge["caption"] = f"📰 Günlük bülten — {gun}"
+            medya.append(oge)
+        post("sendMediaGroup", {"chat_id": chat, "media": json.dumps(medya)}, dosyalar)
+        toplam += len(kok)
+        print(f"[telegram] indeks: {len(kok)} PDF gönderildi")
+    else:
+        post("sendMessage", {"chat_id": chat,
+             "text": f"📰 Günlük bülten — {gun}\nKonular: {', '.join(konular)}"})
     for konu in konular:
         kdir = os.path.join(args.dir, konu)
         pdfler = sorted(f for f in os.listdir(kdir) if f.endswith(".pdf"))

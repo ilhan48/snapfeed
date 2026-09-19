@@ -1,9 +1,8 @@
 name: gunluk-bulten
 
-# Her sabah 07:00 (TRT = UTC+3, yaz/kış aynı): 04:00 UTC
+# Zamanlama kapalı: bülten hermes cihazında cron ile çalışıyor.
+# Gerektiğinde Actions'tan elle tetiklenebilir.
 on:
-  schedule:
-    - cron: "0 4 * * *"
   workflow_dispatch:
 
 jobs:
@@ -52,14 +51,6 @@ jobs:
         run: |
           chmod +x run.sh
           FEEDS=feeds-tr.txt OUTBASE=$PWD/bulten-out STATE=$PWD/data/seen.txt ./run.sh
-
-      - name: Telegram erişim kontrolü
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe")
-          echo "getMe HTTP: $code"
-          getent hosts api.telegram.org || nslookup api.telegram.org || true
 
       - name: Telegram'a gönder
         env:

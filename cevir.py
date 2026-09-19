@@ -171,8 +171,17 @@ def main():
     cevir = argos_yukle()
     p = Cevirici(url, cevir)
     p.feed(sayfa)
+    cikti_html = p.sonuc()
+    # Bilgi bandı: çeviri olduğunu ve orijinali söyler (çeviri sonrası eklenir).
+    bant = (f"<blockquote><p><strong>Bilgi:</strong> bu yazı İngilizceden "
+            f"otomatik çevrildi; kod ve tablolar aynen bırakıldı. "
+            f"Orijinal: {html.escape(url)}</p></blockquote>")
+    if re.search(r"<body[^>]*>", cikti_html):
+        cikti_html = re.sub(r"(<body[^>]*>)", r"\1" + bant, cikti_html, count=1)
+    else:
+        cikti_html = bant + cikti_html
     with open(cikti, "w", encoding="utf-8") as f:
-        f.write(p.sonuc())
+        f.write(cikti_html)
     baslik = " ".join(" ".join(p.baslik_parcalari).split())
     baslik_tr = " ".join(cevir(p) for p in cumlelere_bol(baslik)) if baslik else ""
     with open(cikti + ".title", "w", encoding="utf-8") as f:

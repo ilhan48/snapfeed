@@ -1,19 +1,22 @@
 # snapfeed 📰 → 📄
 
 Yapay zeka, Rust ve Go gündemini her sabah **Türkçe PDF bülten** olarak
-Telegram'ına getiren ücretsiz sistem. PDF motoru: [snappdf](../snappdf)
+getiren ücretsiz sistem. PDF motoru: [snappdf](https://github.com/ilhan48/snappdf)
 (Türkçe karakterli, reklamsız, yer imli).
+
+Tablet + kalemle öğrenmek için üretilir: **4:3 tablet sayfası, sepia tema,
+12 punto**, çevirilerde bilgi bandı (orijinal link dahil), gün başında
+`00. bulten-indeks.pdf` içindekiler sayfası.
 
 ## Nasıl çalışıyor?
 
 1. `feeds-tr.txt`'teki RSS kaynaklarından yeni yazılar çekilir (`bulten.py`)
 2. Türkçe kaynaklar doğrudan, İngilizce derin yazılar **ücretsiz çevrimdışı
-   çeviriyle** Türkçeye çevrilir (`cevir.py`, Argos — kod blokları korunur)
-3. snappdf ile A5 + sepia PDF üretilir (tablet için hazır)
-4. PDF'ler Telegram'a konu albümleri halinde gönderilir (`send_telegram.py`)
-5. Görülen linkler hatırlanır, ertesi gün tekrarlanmaz
-
-Tamamı **ücretsiz**: GitHub Actions (public repo) + Telegram Bot API.
+   çeviriyle** Türkçeye çevrilir (`cevir.py`, Argos — kod ve tablolar korunur)
+3. snappdf ile tablet + sepia + 12pt PDF üretilir
+4. `index.py` gün indeksini hazırlar (`00. bulten-indeks.pdf`)
+5. PDF'ler Telegram'a gönderilir (`send_telegram.py`, indeks önce)
+6. Görülen linkler hatırlanır, ertesi gün tekrarlanmaz
 
 ## Kaynaklar
 
@@ -25,19 +28,25 @@ Tamamı **ücretsiz**: GitHub Actions (public repo) + Telegram Bot API.
 | golang | GoSuda | yerli |
 | golang | Go Blog | çeviri |
 
-## Yerelde çalıştırma
+## hermes kurulumu (birincil yol)
 
 ```bash
-FEEDS=feeds-tr.txt ./run.sh   # ~/Bulten/YYYY-MM-DD/ altına üretir
+cargo install --git https://github.com/ilhan48/snappdf
+pip install argostranslate
+git clone https://github.com/ilhan48/snapfeed && cd snapfeed
+./run.sh                        # ilk bülten ~/Bulten/YYYY-MM-DD/ altına
 ```
 
-## Bulut kurulumu (bir kez)
+Her sabah 07:00 için cron:
 
-1. [@BotFather](https://t.me/BotFather)'dan bot açıp token'ı al
-2. Bot'a bir mesaj atıp chat-id'yi öğren:
-   `https://api.telegram.org/bot<TOKEN>/getUpdates`
-3. Repo → Settings → Secrets → Actions:
-   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
-4. Actions → `gunluk-bulten` → Run workflow ile test et
+```bash
+crontab -e
+# 0 7 * * * cd $HOME/snapfeed && ./run.sh >> logs/cron.log 2>&1
+```
 
-Zamanlama: her gün 04:00 UTC = 07:00 TRT (`.github/workflows/bulten.yml`).
+## Telegram (isteğe bağlı)
+
+Repo Settings → Secrets → Actions'a `TELEGRAM_BOT_TOKEN` +
+`TELEGRAM_CHAT_ID` ekle, Actions → `gunluk-bulten` → Run workflow.
+Not: GitHub runner ağından Bot API'ye POST'lar 404 alıyor (GET çalışıyor);
+nedeni belirsiz — birincil yol hermes + cron.

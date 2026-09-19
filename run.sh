@@ -13,7 +13,7 @@ shopt -s nullglob
 cd "$(dirname "$0")"
 
 SNAPPDF="${SNAPPDF:-$HOME/.cargo/bin/snappdf}"
-FEEDS="${FEEDS:-feeds.txt}"
+FEEDS="${FEEDS:-feeds-tr.txt}"
 STATE="${STATE:-data/seen.txt}"
 OUTBASE="${OUTBASE:-$HOME/Bulten}"
 PORT="${PORT:-8931}"
@@ -22,6 +22,8 @@ LOGDIR="$PWD/logs"
 mkdir -p "$LOGDIR" data "$(dirname "$STATE")"
 LOG="$LOGDIR/$GUN.log"
 touch "$STATE"
+MANIFEST=/tmp/snapfeed-manifest.tsv
+: > "$MANIFEST"
 
 SERVE="$(mktemp -d)"
 python3 -m http.server "$PORT" --directory "$SERVE" >/dev/null 2>&1 &
@@ -72,14 +74,18 @@ while IFS=$'\t' read -r konu mod host url baslik; do
   echo "    $url"
 
   onceki=("$hedef"/*.pdf)
-  if "$SNAPPDF" "$kaynak" -o "$hedef" --page-size a5 --theme sepia \
+  if "$SNAPPDF" "$kaynak" -o "$hedef" --page-size tablet --theme sepia --font-size 12 \
       --lang tr --author "$yazar" >> "$LOG" 2>&1; then
     for p in "$hedef"/*.pdf; do
       eski=0
       for o in ${onceki[@]+"${onceki[@]}"}; do
         [ "$p" = "$o" ] && eski=1 && break
       done
-      [ "$eski" = "0" ] && mv "$p" "$hedef/${sira}. $(slugla "$baslik").pdf"
+      if [ "$eski" = "0" ]; then
+        pdfadi="${sira}. $(slugla "$baslik").pdf"
+        mv "$p" "$hedef/$pdfadi"
+        printf '%s\t%s\t%s\t%s\t%s\n' "$konu" "$mod" "$baslik" "$url" "$pdfadi" >> "$MANIFEST"
+      fi
     done
     echo "$url" >> "$STATE"
     BASARILI=$((BASARILI + 1))
@@ -88,6 +94,23 @@ while IFS=$'\t' read -r konu mod host url baslik; do
     BASARISIZ=$((BASARISIZ + 1))
   fi
 done < /tmp/snapfeed-urls.tsv
+
+if [ "$BASARILI" -gt 0 ]; then
+  python3 index.py --manifest "$MANIFEST" --date "$GUN" --out "$SERVE/indeks.html" >> "$LOG" 2>&1
+  if "$SNAPPDF" "http://127.0.0.1:$PORT/indeks.html" -o "$OUTBASE/$GUN" \
+      --page-size tablet --theme sepia --font-size 12 \
+      --lang tr --author "snapfeed" >> "$LOG" 2>&1; then
+    for p in "$OUTBASE/$GUN"/*.pdf; do
+      [ -f "$p" ] || continue
+      case "$p" in
+        */00.\ bulten-indeks.pdf) ;;
+        *) mv "$p" "$OUTBASE/$GUN/00. bulten-indeks.pdf" && break;;
+      esac
+    done
+  else
+    echo "    [hata] indeks sayfası üretilemedi"
+  fi
+fi
 
 echo "=== bitti: $BASARILI başarılı, $BASARISIZ hatalı ==="
 } 2>&1 | tee -a "$LOG"
