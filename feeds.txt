@@ -1,0 +1,15 @@
+# Biçim: konu | ad | feed_url | sayı
+# sayı = bu kaynaktan bültene alınacak en yeni yazı adedi
+# Satır başı # olanlar yorumdur.
+
+rust | Rust Blog (resmi) | https://blog.rust-lang.org/feed.xml | 2
+rust | This Week in Rust | https://this-week-in-rust.org/rss.xml | 1
+rust | readrust.net | https://readrust.net/all/feed.rss | 2
+
+golang | Go Blog (resmi) | https://go.dev/blog/feed.atom | 2
+golang | GoDaily | https://godaily.dev/rss.xml | 3
+
+yapay-zeka | Hugging Face Blog | https://huggingface.co/blog/feed.xml | 2
+yapay-zeka | BAIR Blog | https://bair.berkeley.edu/blog/feed.xml | 2
+yapay-zeka | Machine Learning Mastery | https://machinelearningmastery.com/blog/feed/ | 2
+yapay-zeka | PyImageSearch | https://pyimagesearch.com/blog/feed/ | 1

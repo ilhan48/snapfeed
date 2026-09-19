@@ -1,0 +1,14 @@
+# Biçim: konu | mod | ad | feed_url | sayı
+# mod = native (Türkçe kaynak, doğrudan PDF) | cevir (İngilizce, Türkçeye çevrilip PDF)
+# sayı = bu kaynaktan alınacak en yeni yazı adedi
+
+yapay-zeka | native | Webrazzi Yapay Zeka | https://webrazzi.com/kategori/yapay-zeka/feed/ | 2
+yapay-zeka | native | Yapay Zeka Postası (günlük) | https://yapayzekapostasi.substack.com/feed | 2
+yapay-zeka | native | Yapay Bülten (haftalık) | https://bulten.yapaybulten.com/feed | 1
+yapay-zeka | cevir | Hugging Face Blog | https://huggingface.co/blog/feed.xml | 1
+
+rust | cevir | Rust Blog (resmi) | https://blog.rust-lang.org/feed.xml | 1
+rust | cevir | This Week in Rust | https://this-week-in-rust.org/rss.xml | 1
+
+golang | native | GoSuda (Türkçe Go) | https://gosuda.org/tr/feed.rss | 2
+golang | cevir | Go Blog (resmi) | https://go.dev/blog/feed.atom | 1

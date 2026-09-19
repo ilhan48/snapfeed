@@ -1,0 +1,69 @@
+name: gunluk-bulten
+
+# Her sabah 07:00 (TRT = UTC+3, yaz/kış aynı): 04:00 UTC
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  bulten:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo önbelleği
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-bulten
+
+      - name: snappdf kur
+        run: cargo install --git https://github.com/ilhan48/snappdf
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Çeviri motoru kur
+        run: pip install -r requirements.txt
+
+      - name: Argos model önbelleği
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/argos-translate
+          key: argos-en-tr-v1
+
+      - name: Görülen linkleri geri yükle
+        uses: actions/cache@v4
+        with:
+          path: data/seen.txt
+          key: seen-${{ github.run_id }}
+          restore-keys: seen-
+
+      - name: Bülteni üret
+        run: |
+          chmod +x run.sh
+          FEEDS=feeds-tr.txt OUTBASE=$PWD/bulten-out STATE=$PWD/data/seen.txt ./run.sh
+
+      - name: Telegram'a gönder
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          GUN=$(date +%F)
+          python3 send_telegram.py --dir bulten-out/$GUN
+
+      - name: PDF'leri artifact olarak sakla (7 gün)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulten-${{ github.run_id }}
+          path: bulten-out/
+          retention-days: 7
