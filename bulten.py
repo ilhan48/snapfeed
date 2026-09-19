@@ -86,10 +86,22 @@ def parse_feed(raw):
     return out
 
 
-def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "snapfeed/0.1"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read()
+def fetch(url, deneme=3):
+    for i in range(deneme):
+        try:
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/126.0 Safari/537.36",
+                "Accept": "application/rss+xml, application/atom+xml, "
+                          "application/xml, text/xml, */*"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return resp.read()
+        except Exception:
+            if i == deneme - 1:
+                raise
+            import time
+            time.sleep(5)
 
 
 def load_feeds(path):

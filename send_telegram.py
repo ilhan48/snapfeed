@@ -51,6 +51,12 @@ def main():
         print("[telegram] token/chat-id yok, gönderim atlandı")
         return
 
+    try:  # token ön kontrolü (değer loga yazılmaz)
+        urllib.request.urlopen(f"{API}/bot{token}/getMe", timeout=30).read()
+    except Exception as e:
+        print(f"[telegram] token geçersiz: {type(e).__name__}")
+        sys.exit(1)
+
     gun = os.path.basename(os.path.normpath(args.dir))
     konular = sorted(d for d in os.listdir(args.dir)
                      if os.path.isdir(os.path.join(args.dir, d)))
